@@ -1906,6 +1906,7 @@
       "private": "Частный",
       "validation": {
         "enterTitle": "Введите название",
+        "enterDescription": "Введите описание",
         "max200Characters": "Макс. 200 символов",
         "max600Characters": "Макс. 600 символов",
         "enterWebsiteName": "Введите название веб-сайта",

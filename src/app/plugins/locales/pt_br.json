@@ -1886,6 +1886,7 @@
       "private": "Privado",
       "validation": {
         "enterTitle": "Digite um título",
+        "enterDescription": "Digite uma descrição",
         "max200Characters": "Máx. 200 caracteres",
         "max600Characters": "Máx. 600 caracteres",
         "enterWebsiteName": "Digite o nome do site",

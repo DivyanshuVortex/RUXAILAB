@@ -1906,6 +1906,7 @@
       "private": "私有",
       "validation": {
         "enterTitle": "输入标题",
+        "enterDescription": "输入描述",
         "max200Characters": "最多200个字符",
         "max600Characters": "最多600个字符",
         "enterWebsiteName": "输入网站名称",

@@ -1885,6 +1885,7 @@
       "private": "निजी",
       "validation": {
         "enterTitle": "एक शीर्षक दर्ज करें",
+        "enterDescription": "एक विवरण दर्ज करें",
         "max200Characters": "अधिकतम 200 वर्ण",
         "max600Characters": "अधिकतम 600 वर्ण",
         "enterWebsiteName": "वेबसाइट का नाम दर्ज करें",

@@ -1906,6 +1906,7 @@
       "private": "非公開",
       "validation": {
         "enterTitle": "タイトルを入力してください",
+        "enterDescription": "説明を入力してください",
         "max200Characters": "最大200文字",
         "max600Characters": "最大600文字",
         "enterWebsiteName": "ウェブサイト名を入力してください",

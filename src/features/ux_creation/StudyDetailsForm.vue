@@ -58,6 +58,13 @@
                       />
                       <v-textarea
                         v-model="test.description"
+                        :rules="[
+                          (v) =>
+                            !!v ||
+                            $t(
+                              'studyCreation.details.validation.enterDescription',
+                            ),
+                        ]"
                         :label="$t('studyCreation.details.studyDescription')"
                         :placeholder="
                           $t('studyCreation.details.enterDescription')
@@ -336,6 +343,10 @@ watch(
 const validate = () => {
   if (!test.value.title) {
     showWarning('studyCreation.details.validation.enterTitle')
+    return
+  }
+  if (!test.value.description) {
+    showWarning('studyCreation.details.validation.enterDescription')
     return
   }
   if (test.value.title.length > 200) {

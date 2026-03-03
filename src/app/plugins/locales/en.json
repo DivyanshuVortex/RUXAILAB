@@ -1900,6 +1900,7 @@
       "private": "Private",
       "validation": {
         "enterTitle": "Enter a Title",
+        "enterDescription": "Enter a Description",
         "max200Characters": "Max 200 characters",
         "max600Characters": "Max 600 characters",
         "enterWebsiteName": "Enter website name",

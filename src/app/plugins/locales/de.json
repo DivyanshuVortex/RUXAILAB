@@ -1907,6 +1907,7 @@
       "private": "Privat",
       "validation": {
         "enterTitle": "Titel eingeben",
+        "enterDescription": "Beschreibung eingeben",
         "max200Characters": "Max. 200 Zeichen",
         "max600Characters": "Max. 600 Zeichen",
         "enterWebsiteName": "Website-Namen eingeben",

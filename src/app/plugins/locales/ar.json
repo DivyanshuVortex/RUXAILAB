@@ -1905,6 +1905,7 @@
       "private": "خاص",
       "validation": {
         "enterTitle": "أدخل عنوانًا",
+        "enterDescription": "أدخل وصفًا",
         "max200Characters": "الحد الأقصى 200 حرف",
         "max600Characters": "الحد الأقصى 600 حرف",
         "enterWebsiteName": "أدخل اسم الموقع",
