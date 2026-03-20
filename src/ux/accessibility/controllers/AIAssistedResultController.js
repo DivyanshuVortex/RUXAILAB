@@ -431,6 +431,95 @@ class AIAssistedResultController {
     }
 
     /**
+     * Save page inventory results
+     * @param {string} testId - The test ID
+     * @param {Array} inventory - Discovered pages
+     * @returns {Promise<AIAssistedResult>}
+     */
+    async saveInventory(testId, inventory) {
+        try {
+            let result = await this.getOrCreateResult(testId);
+            result.pageInventory = inventory;
+            result.updatedAt = new Date().toISOString();
+
+            const docRef = doc(db, COLLECTION_NAME, testId);
+            await updateDoc(docRef, {
+                pageInventory: result.pageInventory,
+                updatedAt: result.updatedAt
+            });
+
+            console.log('Page inventory saved for test:', testId);
+            return result;
+        } catch (error) {
+            console.error('Error saving inventory:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Save sampling results
+     * @param {string} testId - The test ID
+     * @param {Array} sample - Selected pages
+     * @returns {Promise<AIAssistedResult>}
+     */
+    async saveSampling(testId, sample) {
+        try {
+            let result = await this.getOrCreateResult(testId);
+            result.sampling = sample;
+            result.updatedAt = new Date().toISOString();
+
+            const docRef = doc(db, COLLECTION_NAME, testId);
+            await updateDoc(docRef, {
+                sampling: result.sampling,
+                updatedAt: result.updatedAt
+            });
+
+            console.log('Sampling saved for test:', testId);
+            return result;
+        } catch (error) {
+            console.error('Error saving sampling:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Save manual audit verdict for a page
+     * @param {string} testId - The test ID
+     * @param {string} pageUrl - The URL of the audited page
+     * @param {string} scId - Success Criterion ID
+     * @param {Object} verdictData - { verdict, evidence }
+     * @returns {Promise<AIAssistedResult>}
+     */
+    async saveAuditVerdict(testId, pageUrl, scId, verdictData) {
+        try {
+            let result = await this.getOrCreateResult(testId);
+            
+            if (!result.manualAudit) result.manualAudit = {};
+            if (!result.manualAudit[pageUrl]) result.manualAudit[pageUrl] = {};
+            
+            result.manualAudit[pageUrl][scId] = {
+                verdict: verdictData.verdict,
+                evidence: verdictData.evidence,
+                timestamp: new Date().toISOString()
+            };
+            
+            result.updatedAt = new Date().toISOString();
+
+            const docRef = doc(db, COLLECTION_NAME, testId);
+            await updateDoc(docRef, {
+                manualAudit: result.manualAudit,
+                updatedAt: result.updatedAt
+            });
+
+            console.log('Audit verdict saved for test:', testId);
+            return result;
+        } catch (error) {
+            console.error('Error saving audit verdict:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Get all results (admin function)
      * @returns {Promise<AIAssistedResult[]>}
      */

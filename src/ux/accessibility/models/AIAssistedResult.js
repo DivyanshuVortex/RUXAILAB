@@ -29,6 +29,14 @@ export default class AIAssistedResult {
         // Analysis summary (computed from tool results)
         this.totalIssues = data.totalIssues || 0;
         this.toolsCompleted = data.toolsCompleted || [];
+
+        // Methodological Scoping & Exploration
+        this.maxDepth = data.maxDepth || 2;
+        this.maxPages = data.maxPages || 15;
+        this.disabilityProfiles = data.disabilityProfiles || ['VISUAL'];
+        this.pageInventory = data.pageInventory || []; // BFS crawl results
+        this.sampling = data.sampling || []; // Deterministic sample
+        this.manualAudit = data.manualAudit || {}; // { pageUrl: { scId: { verdict, evidence } } }
     }
 
     /**
@@ -49,7 +57,13 @@ export default class AIAssistedResult {
             updatedAt: this.updatedAt,
             lastAnalyzedTool: this.lastAnalyzedTool,
             totalIssues: this.totalIssues,
-            toolsCompleted: this.toolsCompleted
+            toolsCompleted: this.toolsCompleted,
+            maxDepth: this.maxDepth,
+            maxPages: this.maxPages,
+            disabilityProfiles: this.disabilityProfiles,
+            pageInventory: this.pageInventory,
+            sampling: this.sampling,
+            manualAudit: this.manualAudit
         };
     }
 

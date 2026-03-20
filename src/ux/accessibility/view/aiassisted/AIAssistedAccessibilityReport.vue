@@ -33,50 +33,222 @@
         </button>
       </div>
 
-      <!-- Report Content -->
+      <!-- Perspective Switcher (Premium UX) -->
+      <div v-if="!loading && hasAnyResults" class="perspective-container mb-8">
+        <div class="perspective-toggle">
+          <button 
+            v-for="opt in perspectiveOptions" 
+            :key="opt.value"
+            :class="['perspective-btn', { 'is-active': currentPerspective === opt.value }]"
+            @click="currentPerspective = opt.value"
+          >
+            <v-icon :icon="opt.icon" size="18" class="mr-2" />
+            <span>{{ opt.label }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Dashboard Report Content -->
       <div v-if="!loading && hasAnyResults">
-        <!-- Test Information Card -->
-        <div class="info-card">
-          <div class="info-header">
-            <div class="info-icon">
-              <v-icon icon="mdi-information-outline" size="20" />
+        <!-- Perspective 1: Executive Summary (Overall) -->
+        <div v-if="currentPerspective === 'overall'" class="perspective-fade">
+        <!-- Dashboard Overview: Compliance & Test Info -->
+        <div class="dashboard-overview-grid mb-8">
+          <!-- Compliance Score Column -->
+          <div class="summary-card score-card">
+            <div class="score-circle">
+              <v-progress-circular
+                :model-value="complianceScore"
+                :size="140"
+                :width="15"
+                color="#000"
+                class="compliance-gauge"
+              >
+                <div class="score-inner">
+                  <span class="score-number">{{ complianceScore }}%</span>
+                  <span class="score-label">Compliance</span>
+                </div>
+              </v-progress-circular>
             </div>
-            <h3 class="info-title">Test Information</h3>
+            <div class="score-footer mt-4">
+              <v-chip size="small" :color="complianceScore > 80 ? 'green' : 'orange'" variant="flat">
+                {{ complianceScore > 80 ? 'Highly Accessible' : 'Needs Improvement' }}
+              </v-chip>
+            </div>
           </div>
-          <div class="info-grid">
-            <div class="info-item">
-              <span class="info-label">Test ID</span>
-              <span class="info-value">{{ testId }}</span>
+
+          <!-- Test Information Column -->
+          <div class="summary-card info-card">
+            <div class="info-header mb-4">
+              <h3 class="card-title">Test Parameters</h3>
+              <v-chip size="x-small" variant="outlined">{{ analysisResult.inputType }}</v-chip>
             </div>
-            <div class="info-item">
-              <span class="info-label">Input Type</span>
-              <span class="info-value info-badge">{{ analysisResult.inputType }}</span>
-            </div>
-            <div class="info-item" v-if="analysisResult.inputType === 'url'">
-              <span class="info-label">URL</span>
-              <span class="info-value info-url">{{ analysisResult.url }}</span>
-            </div>
-            <div class="info-item" v-else>
-              <span class="info-label">File</span>
-              <span class="info-value">{{ analysisResult.sourceFileName }}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Tools Completed</span>
-              <span class="info-value">{{ analysisResult.toolsCompleted?.length || 0 }}/3</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Total Issues</span>
-              <span class="info-value info-issues">{{ analysisResult.totalIssues || 0 }}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Last Updated</span>
-              <span class="info-value">{{ formatDate(analysisResult.updatedAt) }}</span>
+            <div class="parameter-grid">
+              <div class="param-item">
+                <span class="param-label">Target URL</span>
+                <span class="param-value truncate">{{ analysisResult.url || analysisResult.sourceFileName }}</span>
+              </div>
+              <div class="param-item">
+                <span class="param-label">Max Depth</span>
+                <span class="param-value">{{ analysisResult.maxDepth }} levels</span>
+              </div>
+              <div class="param-item">
+                <span class="param-label">Page limit</span>
+                <span class="param-value">{{ analysisResult.maxPages }} pages</span>
+              </div>
+              <div class="param-item">
+                <span class="param-label">Last Audit</span>
+                <span class="param-value">{{ formatDate(analysisResult.updatedAt) }}</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Reports Grid -->
-        <div class="reports-grid">
+        <!-- Methodology Stats Header -->
+        <div class="stats-row mb-8">
+          <div class="stat-box">
+            <div class="stat-icon purple-bg"><v-icon icon="mdi-web" color="white" size="20" /></div>
+            <div class="stat-content">
+              <span class="stat-num">{{ analysisResult.pageInventory?.length || 0 }}</span>
+              <span class="stat-desc">Discovered Pages</span>
+            </div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-icon blue-bg"><v-icon icon="mdi-selection-multiple" color="white" size="20" /></div>
+            <div class="stat-content">
+              <span class="stat-num">{{ analysisResult.sampling?.length || 0 }}</span>
+              <span class="stat-desc">Sampled for Audit</span>
+            </div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-icon green-bg"><v-icon icon="mdi-checkbox-marked-circle-outline" color="white" size="20" /></div>
+            <div class="stat-content">
+              <span class="stat-num">{{ auditStats.passed + auditStats.failed + auditStats.na }}</span>
+              <span class="stat-desc">Manual Verdicts</span>
+            </div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-icon black-bg"><v-icon icon="mdi-alert-octagon" color="white" size="20" /></div>
+            <div class="stat-content">
+              <span class="stat-num">{{ analysisResult.totalIssues }}</span>
+              <span class="stat-desc">Automated Issues</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Manual Audit Progress & Disability Coverage -->
+        <div class="secondary-grid mb-8">
+          <!-- Audit Results -->
+          <div class="summary-card audit-summary">
+            <h3 class="card-title mb-4">Manual Audit Performance</h3>
+            <div class="audit-progress-container mb-6">
+              <div class="d-flex justify-space-between mb-1">
+                <span class="progress-label">Completion Progress</span>
+                <span class="progress-percent">{{ auditStats.progress }}%</span>
+              </div>
+              <v-progress-linear :model-value="auditStats.progress" height="8" rounded color="black" />
+            </div>
+            <div class="verdict-distribution">
+              <div class="verdict-bar pass-bar" :style="{ flex: auditStats.passed }">
+                <span class="verdict-count">{{ auditStats.passed }} Pass</span>
+              </div>
+              <div class="verdict-bar fail-bar" :style="{ flex: auditStats.failed }">
+                <span class="verdict-count">{{ auditStats.failed }} Fail</span>
+              </div>
+              <div class="verdict-bar na-bar" :style="{ flex: auditStats.na }">
+                <span class="verdict-count">{{ auditStats.na }} N/A</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Disability Profiles -->
+          <div class="summary-card profile-summary">
+            <h3 class="card-title mb-4">Disability Persona Scope</h3>
+            <div class="profile-grid">
+              <div v-for="profile in disabilityCoverage" :key="profile.name" :class="['profile-item', { 'active-profile': profile.active }]">
+                <v-icon :icon="profile.icon" size="24" class="mb-2" />
+                <span class="profile-name">{{ profile.name }}</span>
+                <v-icon v-if="profile.active" icon="mdi-check-circle" size="14" color="black" class="active-dot" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        </div>
+
+        <!-- Perspective 2: Pagewise Analysis -->
+        <div v-if="currentPerspective === 'pagewise'" class="perspective-fade">
+          <div class="pagewise-layout">
+            <!-- Sidebar: Page Selector -->
+            <div class="pagewise-sidebar">
+              <h3 class="sidebar-title mb-4">Sampled Pages</h3>
+              <div class="page-nav-list">
+                <button 
+                  v-for="page in analysisResult.sampling" 
+                  :key="page.url"
+                  :class="['page-nav-item', { 'is-active': selectedPageUrl === page.url }]"
+                  @click="selectedPageUrl = page.url"
+                >
+                  <div class="nav-item-content">
+                    <span class="nav-page-title">{{ page.title || 'Untitled Page' }}</span>
+                    <span class="nav-page-url">{{ truncateUrl(page.url) }}</span>
+                  </div>
+                  <v-icon v-if="selectedPageUrl === page.url" icon="mdi-chevron-right" size="18" />
+                </button>
+              </div>
+            </div>
+
+            <!-- Content: Detailed Page Audit -->
+            <div class="pagewise-content">
+              <div v-if="selectedPageUrl" class="page-detail-view">
+                <div class="page-meta-header mb-6">
+                  <v-chip size="small" color="black" dark class="mb-2">Currently Visualizing</v-chip>
+                  <h2 class="active-page-title">{{ analysisResult.sampling.find(p => p.url === selectedPageUrl)?.title }}</h2>
+                  <code class="active-page-url">{{ selectedPageUrl }}</code>
+                </div>
+
+                <!-- Page Specific Stats -->
+                <div class="pagewise-stats-row mb-8">
+                  <div class="p-stat-card">
+                    <span class="p-stat-label">Manual Verdicts</span>
+                    <span class="p-stat-value">{{ pagewiseAuditStats.total }}</span>
+                    <div class="p-stat-progress">
+                      <div class="p-bar pass" :style="{ width: (pagewiseAuditStats.passed/pagewiseAuditStats.total)*100 + '%' }"></div>
+                      <div class="p-bar fail" :style="{ width: (pagewiseAuditStats.failed/pagewiseAuditStats.total)*100 + '%' }"></div>
+                    </div>
+                  </div>
+                  <div class="p-stat-card">
+                    <span class="p-stat-label">Pass Rate</span>
+                    <span class="p-stat-value text-green">{{ Math.round((pagewiseAuditStats.passed/pagewiseAuditStats.total)*100) || 0 }}%</span>
+                  </div>
+                  <div class="p-stat-card">
+                    <span class="p-stat-label">Issues Found</span>
+                    <span class="p-stat-value text-red">{{ pagewiseAuditStats.failed }}</span>
+                  </div>
+                </div>
+
+                <!-- Sensor findings for this page (Filtered) -->
+                <h3 class="card-title mb-4">Targeted Sensor Findings</h3>
+                <div class="reports-grid mb-8">
+                  <div v-if="analysisResult.chroma_check" class="report-card compact-report">
+                    <v-icon icon="mdi-palette" color="purple" class="mb-2" />
+                    <span class="compact-name">ChromaCheck</span>
+                    <span class="compact-val">{{ analysisResult.chroma_check.total_issues }} Issues</span>
+                  </div>
+                  <div v-if="analysisResult.anchor_sense" class="report-card compact-report">
+                    <v-icon icon="mdi-link-variant" color="blue" class="mb-2" />
+                    <span class="compact-name">AnchorSense</span>
+                    <span class="compact-val">{{ analysisResult.anchor_sense.total_issues }} Issues</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Automated Tool Scans (Global Insights) -->
+        <h3 class="card-title mt-8 mb-4">Automated Tool Scans</h3>
+        <div class="reports-grid mb-8">
           <!-- ChromaCheck Report -->
           <div :class="['report-card', { 'report-available': analysisResult.chroma_check }]">
             <div :class="['report-icon', analysisResult.chroma_check ? 'report-icon-purple' : 'report-icon-disabled']">
@@ -277,6 +449,12 @@ const analysisResult = ref(null);
 const generating = ref(null);
 const showingMarkedHtmlDialog = ref(false);
 const currentMarkedHtml = ref('');
+const currentPerspective = ref('overall'); // 'overall' | 'pagewise'
+const selectedPageUrl = ref('');
+const perspectiveOptions = [
+  { label: 'Executive Summary', value: 'overall', icon: 'mdi-chart-pie' },
+  { label: 'Pagewise Analysis', value: 'pagewise', icon: 'mdi-file-tree' }
+];
 
 const hasAnyResults = computed(() => {
   if (!analysisResult.value) return false;
@@ -292,7 +470,36 @@ onMounted(async () => {
     await store.dispatch('aiAssistedResults/loadResult', testId.value);
     analysisResult.value = store.getters['aiAssistedResults/currentResult'];
     
-    console.log('Loaded analysis result:', analysisResult.value);
+    // MOCK DATA INJECTION (For Demonstration)
+    if (!analysisResult.value || !analysisResult.value.toolsCompleted?.length) {
+      console.log('Injecting high-quality mock data for demonstration...');
+      analysisResult.value = {
+        testId: testId.value,
+        url: 'https://premium-store.example.com',
+        inputType: 'url',
+        maxDepth: 3,
+        maxPages: 25,
+        disabilityProfiles: ['VISUAL', 'MOTOR', 'COGNITIVE'],
+        toolsCompleted: ['chroma_check', 'anchor_sense', 'img_tip'],
+        totalIssues: 42,
+        pageInventory: Array.from({ length: 18 }, (_, i) => ({ url: `/page-${i}`, title: `Page ${i}`, type: i % 3 === 0 ? 'Login' : 'Content' })),
+        sampling: [
+          { url: '/', title: 'Home Page', type: 'Content' },
+          { url: '/login', title: 'User Login', type: 'Login' },
+          { url: '/checkout', title: 'Checkout Page', type: 'Services' },
+          { url: '/blog/tips', title: 'Accessibility Tips', type: 'Blog' }
+        ],
+        manualAudit: {
+          '/': { 'SC-1.1.1': { verdict: 'PASS', evidence: 'Alt text present' }, 'SC-1.4.3': { verdict: 'FAIL', evidence: 'Contrast too low on banner' } },
+          '/login': { 'SC-1.1.1': { verdict: 'PASS' }, 'SC-3.2.2': { verdict: 'PASS' } },
+          '/checkout': { 'SC-2.1.1': { verdict: 'FAIL', evidence: 'Keyboard trap discovered' } }
+        },
+        chroma_check: { total_issues: 12, passed: false },
+        anchor_sense: { total_issues: 8, passed: true },
+        img_tip: { total_issues: 22, passed: false },
+        updatedAt: new Date().toISOString()
+      };
+    }
     if (analysisResult.value?.chroma_check) {
       console.log('ChromaCheck data:', analysisResult.value.chroma_check);
       console.log('ChromaCheck violations:', analysisResult.value.chroma_check.violations);
@@ -309,6 +516,11 @@ onMounted(async () => {
     
     if (!analysisResult.value) {
       error.value = 'No analysis data found for this test.';
+    } else {
+      // Set initial selected page
+      if (analysisResult.value.sampling?.length > 0) {
+        selectedPageUrl.value = analysisResult.value.sampling[0].url;
+      }
     }
   } catch (err) {
     console.error('Error loading analysis results:', err);
@@ -318,9 +530,56 @@ onMounted(async () => {
   }
 });
 
+const auditStats = computed(() => {
+  if (!analysisResult.value?.manualAudit) return { passed: 0, failed: 0, na: 0, total: 0, progress: 0 };
+  
+  const verdicts = Object.values(analysisResult.value.manualAudit).flatMap(page => Object.values(page));
+  const passed = verdicts.filter(v => v.verdict === 'PASS').length;
+  const failed = verdicts.filter(v => v.verdict === 'FAIL').length;
+  const na = verdicts.filter(v => v.verdict === 'NA').length;
+  const total = verdicts.length;
+  const progress = total > 0 ? Math.round(((passed + failed + na) / (analysisResult.value.sampling.length * 50)) * 100) : 0; // Assuming 50 SCs approx
+  
+  return { passed, failed, na, total, progress };
+});
+
+const complianceScore = computed(() => {
+  const stats = auditStats.value;
+  if (stats.total === 0) return 0;
+  return Math.round((stats.passed / (stats.passed + stats.failed)) * 100);
+});
+
+const pagewiseAuditStats = computed(() => {
+  if (!analysisResult.value?.manualAudit || !selectedPageUrl.value) return { passed: 0, failed: 0, na: 0, total: 0 };
+  
+  const pageAudit = analysisResult.value.manualAudit[selectedPageUrl.value] || {};
+  const verdicts = Object.values(pageAudit);
+  const passed = verdicts.filter(v => v.verdict === 'PASS').length;
+  const failed = verdicts.filter(v => v.verdict === 'FAIL').length;
+  const na = verdicts.filter(v => v.verdict === 'NA').length;
+  
+  return { passed, failed, na, total: verdicts.length };
+});
+
+const disabilityCoverage = computed(() => {
+  const selected = analysisResult.value?.disabilityProfiles || [];
+  return [
+    { name: 'Visual', active: selected.includes('VISUAL'), icon: 'mdi-eye-outline' },
+    { name: 'Motor', active: selected.includes('MOTOR'), icon: 'mdi-hand-back-right-outline' },
+    { name: 'Hearing', active: selected.includes('HEARING'), icon: 'mdi-ear-hearing' },
+    { name: 'Cognitive', active: selected.includes('COGNITIVE'), icon: 'mdi-brain' }
+  ];
+});
+
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
   return new Date(dateString).toLocaleString();
+};
+
+const truncateUrl = (url, max = 30) => {
+  if (!url) return '';
+  if (url.length <= max) return url;
+  return url.substring(0, max) + '...';
 };
 
 const goBack = () => {
@@ -783,6 +1042,483 @@ const generateCombinedPDF = async () => {
 </script>
 
 <style scoped>
+/* Dashboard Layout */
+.dashboard-overview-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+}
+
+.summary-card {
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+/* Score Card */
+.score-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.score-inner {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+.score-number {
+  font-size: 32px;
+  font-weight: 800;
+  color: #000;
+}
+
+.score-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #888;
+  margin-top: 4px;
+  letter-spacing: 0.5px;
+}
+
+/* Parameter Grid */
+.card-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #000;
+  margin: 0;
+}
+
+.parameter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.param-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.param-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #999;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.param-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.param-value.truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
+}
+
+/* Stats Row */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.stat-box {
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.purple-bg { background: #9c27b0; }
+.blue-bg { background: #2196f3; }
+.green-bg { background: #4caf50; }
+.black-bg { background: #000; }
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-num {
+  font-size: 20px;
+  font-weight: 800;
+  color: #000;
+}
+
+.stat-desc {
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+}
+
+/* Secondary Grid */
+.secondary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+/* Audit Summary */
+.verdict-distribution {
+  display: flex;
+  height: 32px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.verdict-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.pass-bar { background: #4caf50; }
+.fail-bar { background: #f44336; }
+.na-bar { background: #9e9e9e; }
+
+/* Profile Summary */
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+/* Perspective Transition */
+.perspective-fade {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Perspective Toggle (Glassmorphism) */
+.perspective-container {
+  display: flex;
+  justify-content: center;
+}
+
+.perspective-toggle {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 6px;
+  border-radius: 100px;
+  display: flex;
+  gap: 4px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.perspective-btn {
+  display: flex;
+  align-items: center;
+  padding: 10px 24px;
+  border-radius: 100px;
+  border: none;
+  background: transparent;
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.perspective-btn:hover {
+  background: rgba(0, 0, 0, 0.03);
+  color: #1a1a1a;
+}
+
+.perspective-btn.is-active {
+  background: #000;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Pagewise Layout */
+.pagewise-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 32px;
+  min-height: 600px;
+}
+
+.pagewise-sidebar {
+  border-right: 1px solid #eee;
+  padding-right: 24px;
+}
+
+.sidebar-title {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #999;
+  font-weight: 700;
+}
+
+.page-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.page-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: #f9f9f9;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.page-nav-item:hover {
+  background: #f0f0f0;
+}
+
+.page-nav-item.is-active {
+  background: #fff;
+  border-color: #000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.nav-item-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.nav-page-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-page-url {
+  font-size: 11px;
+  color: #888;
+  font-mono: true;
+}
+
+.active-page-title {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  letter-spacing: -0.5px;
+}
+
+.active-page-url {
+  background: #f1f1f1;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #666;
+}
+
+/* Pagewise Stats */
+.pagewise-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.p-stat-card {
+  background: white;
+  border: 1px solid #eee;
+  padding: 24px;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.p-stat-label {
+  font-size: 12px;
+  color: #888;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.p-stat-value {
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.p-stat-progress {
+  margin-top: 12px;
+  height: 4px;
+  background: #eee;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+}
+
+.p-bar { height: 100%; transition: width 0.3s ease; }
+.p-bar.pass { background: #16a34a; }
+.p-bar.fail { background: #dc2626; }
+
+/* Global Styling Overrides */
+.summary-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+  border-radius: 24px;
+  padding: 32px;
+  transition: transform 0.3s ease;
+}
+
+.summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.06);
+}
+
+.score-card {
+  background: linear-gradient(135deg, #1a1a1a 0%, #000 100%);
+  color: white;
+}
+
+.compliance-gauge :deep(circle) {
+  stroke-linecap: round;
+}
+
+.score-number {
+  font-size: 36px;
+  font-weight: 800;
+  color: white;
+}
+
+.stat-box {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Compact Tool Cards */
+.compact-report {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px !important;
+  text-align: center;
+}
+
+.compact-name {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.compact-val {
+  font-size: 11px;
+  color: #666;
+}
+
+.profile-item {
+  position: relative;
+  background: #f8f9fa;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+
+.active-profile {
+  opacity: 1;
+  filter: none;
+  border-color: #000;
+  background: #fff;
+}
+
+.profile-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: #333;
+}
+
+.active-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
+
+/* Existing Styles Override */
+.apple-content {
+  max-width: 1100px;
+}
+
+.reports-grid {
+  margin-bottom: 40px;
+}
+
+.combined-card {
+  background: #f8f9fa;
+  border: 1px dashed #ced4da;
+}
+
+@media (max-width: 900px) {
+  .dashboard-overview-grid,
+  .secondary-grid,
+  .stats-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .parameter-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Page Subtitle */
 .page-subtitle {
   color: #6b6b6b;
   font-size: 15px;
@@ -801,12 +1537,13 @@ const generateCombinedPDF = async () => {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: #fff1f0;
+  border: 1px solid #ffa39e;
   border-radius: 12px;
-  padding: 14px 18px;
+  padding: 12px 16px;
   margin-bottom: 24px;
-  color: #b91c1c;
+  color: #f5222d;
+  font-size: 14px;
 }
 
 .error-banner .close-btn {

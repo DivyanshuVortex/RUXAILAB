@@ -29,6 +29,7 @@ import AIAssistedAccessibilityReport from '@/ux/accessibility/view/aiassisted/AI
 import ChromaCheck from '@/ux/accessibility/view/aiassisted/tools/ChromaCheck.vue';
 import AnchorSense from '@/ux/accessibility/view/aiassisted/tools/AnchorSense.vue';
 import ImgTagTip from '@/ux/accessibility/view/aiassisted/tools/ImgTagTip.vue';
+import AIAssistedAuditMatrix from '@/ux/accessibility/view/aiassisted/tools/AIAssistedAuditMatrix.vue';
 
 // Navigation guard
 import { accessibilityGuard } from '@/ux/accessibility/guards/accessibilityGuard.js';
@@ -215,6 +216,14 @@ const accessibilityRoutes = [
                 meta: { authorize: [0, 1] },
                 beforeEnter: accessibilityGuard,
                 component: ImgTagTip,
+            },
+            {
+                path: '/accessibility/aiassisted/examine/:id/audit',
+                name: 'AIAssistedAccessibilityExamineAudit',
+                props: true,
+                meta: { authorize: [0, 1] },
+                beforeEnter: accessibilityGuard,
+                component: AIAssistedAuditMatrix,
             },
             {
                 path: '/accessibility/aiassisted/settings/:id',
